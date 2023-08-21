@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<form method="POST">
+    {% csrf_token %}
+<div>
+    <label for="phone">Phone</label>
+    <input class="form-control" type="text" name="phone" required>
+</div>
+
+<div>
+    <input class="btn btn-primary mt-3" type="submit" value="login">
+</div>
+</form>
+{% endblock content %}

@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+    <p> Профиль</p>
+    <div class="container">
+        <table class="table">
+            <thead>
+            <tr>
+                <th scope="col">Ваш инвайт код</th>
+                <th scope="col">Вы пригласили:</th>
+                <th scope="col">Вас пригласил:</th>
+            </tr>
+            </thead>
+    </div>
+    <tbody>
+    <tr>
+        <td>
+            {{ code }}
+        </td>
+        <td>
+            {% if my_recs %}
+                <ul>
+                    {% for p in my_recs %}
+                        <li>
+                            {{ p.user }}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <h6>Вы ещё никого не пригласили</h6>
+            {% endif %}
+        </td>
+        <td>
+            {% if rec_by %}
+                {{ rec_by }}
+            {% else %}
+                <form action={% url 'add_ref' %} method="POST">
+                    {% csrf_token %}
+                    <input class="form-control" type="text" name="code_sent" required>
+                    <input class="btn-primary" type="submit" value="Отправить запрос">
+                    {% if error_message %}
+                        <p>{{ error_message }}</p>
+                    {% endif %}
+                </form>
+            {% endif %}
+
+        </td>
+    </tr>
+    </tbody>
+    </table>
+    <a href="{% url 'logout' %}" class="btn btn-danger">Выйти из аккаунта</a>
+{% endblock content %}
