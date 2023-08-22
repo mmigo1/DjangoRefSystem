@@ -3,13 +3,13 @@ from django.contrib.auth.models import User, AbstractBaseUser
 from django.contrib.auth.models import PermissionsMixin
 from .utils import generate_ref_code
 from django.utils import timezone
-
+from django.core.validators import RegexValidator
 from .manager import CustomUserManager
 
 
 # Create your models here.
 class CustomUser(AbstractBaseUser, PermissionsMixin):
-    phone = models.CharField(unique=True, max_length=20)
+    phone = models.CharField(unique=True, max_length=15, validators=[RegexValidator(regex=r'[0-9]{3}-[0-9]{3}-[0-9]{2}-[0-9]{2}')])
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     date_joined = models.DateTimeField(default=timezone.now)
@@ -49,4 +49,3 @@ class Profile(models.Model):
             code = generate_ref_code()
             self.code = code
         super().save(*args, **kwargs)
-

@@ -4,18 +4,18 @@ from django.contrib.auth import logout, login
 
 from django.contrib.auth.decorators import login_required
 from rest_framework.decorators import permission_classes, api_view
-
+from .models import Profile, CustomUser
 from .utils import send_opt
 from datetime import datetime
 import pyotp
-
 from rest_framework import status
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .serializer import *
+from .serializer import UserSerializer
 from rest_framework.permissions import IsAuthenticated
 
+from django.contrib import messages
 
 def login_view(request):
     if request.method == 'POST':
@@ -27,9 +27,7 @@ def login_view(request):
             return redirect('otp')
         else:
             user = CustomUser.objects.create(phone=username)
-
             profile = Profile.objects.create(user=user)
-            print(user, profile)
             send_opt(request)
             request.session['phone'] = username
             return redirect('otp')
@@ -63,11 +61,15 @@ def add_ref(request):
     code = request.POST['code_sent']
     invited_by = Profile.objects.filter(code=code)
     if not invited_by:
-        request.session['error'] = 'Пользователь с таким кодом не найден. Повторите.'
+        request.session['error'] = 'Пользователь с таким кодом не найден. Повторите'
         return redirect('main')
     else:
         invited_by = Profile.objects.get(code=code)
+
     username = request.user
+    if invited_by.recommended_by == username:
+        request.session['error'] = 'Нельзя ввести код пользователя, которого вы пригласили. Повторите'
+        return redirect('main')
     user = CustomUser.objects.get(phone=username)
     if code == user.profile.code:
         request.session['error'] = 'Нельзя вводить свой код. Повторите'
@@ -79,16 +81,14 @@ def add_ref(request):
 
 def otp_view(request):
     error_message = None
+    messages.success(request,'Ваш код ' + request.session['otp'])
     if request.method == 'POST':
-        otp = request.POST['otp']
         username = request.session['phone']
-
+        otp = request.POST['otp']
         otp_secret_key = request.session['otp_secret_key']
         otp_valid_date = request.session['otp_valid_date']
-
         if otp_secret_key and otp_valid_date is not None:
             valid_until = datetime.fromisoformat(otp_valid_date)
-
             if valid_until > datetime.now():
                 totp = pyotp.TOTP(otp_secret_key, interval=60)
                 if totp.verify(otp):
